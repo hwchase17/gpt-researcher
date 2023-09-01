@@ -33,7 +33,7 @@ FILE_DIR = Path(__file__).parent.parent
 CFG = Config()
 
 
-async def async_browse(url: str, question: str, websocket: WebSocket) -> str:
+async def async_browse(url: str, question: str) -> str:
     """Browse a website and return the answer and links to the user
 
     Args:
@@ -48,16 +48,11 @@ async def async_browse(url: str, question: str, websocket: WebSocket) -> str:
     executor = ThreadPoolExecutor(max_workers=8)
 
     print(f"Scraping url {url} with question {question}")
-    await websocket.send_json(
-        {"type": "logs", "output": f"🔎 Browsing the {url} for relevant about: {question}..."})
 
     try:
         driver, text = await loop.run_in_executor(executor, scrape_text_with_selenium, url)
         await loop.run_in_executor(executor, add_header, driver)
         summary_text = await loop.run_in_executor(executor, summary.summarize_text, url, text, question, driver)
-
-        await websocket.send_json(
-            {"type": "logs", "output": f"📝 Information gathered from url {url}: {summary_text}"})
 
         return f"Information gathered from url {url}: {summary_text}"
     except Exception as e:
